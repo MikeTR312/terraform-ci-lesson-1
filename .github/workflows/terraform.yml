@@ -29,3 +29,46 @@ jobs:
 
       - name: 🔍 Terraform Plan
         run: terraform plan
+
+
+        name: Terraform CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # 👈 позволяет запускать вручную (например, apply)
+
+env:
+  TF_IN_AUTOMATION: true
+
+jobs:
+  terraform:
+    name: Terraform Plan & Optional Apply
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🔧 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: 🔐 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: 📦 Terraform Init
+        run: terraform init
+
+      - name: 🔍 Terraform Plan
+        run: terraform plan
+
+      - name: 🚀 Terraform Apply (manual only)
+        if: github.event_name == 'workflow_dispatch'
+        run: terraform apply -auto-approve
